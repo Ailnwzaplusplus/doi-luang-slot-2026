@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ที่ว่าง ดอยหลวงเชียงดาว 2026 (Static)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pine:#1f3b2d; --bg:#eceeea; --card:#ffffff; --text:#1c2420; --muted:#66706a; --line:#d6dbd5;
+  --ok:#cfeedd; --ok-t:#0f5a32; --some:#fbe7b0; --some-t:#6e4f00;
+  --full:#f4f5f2; --full-t:#8a928c; --off:#e3e6e1; --p1:#b3262e; --p0:#5b2bbf; --warn:#fbe7b0;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --pine:#16291f; --bg:#121614; --card:#1b201d; --text:#e6ebe7; --muted:#97a19a; --line:#2e3631;
+  --ok:#153d27; --ok-t:#8fe3b2; --some:#43360c; --some-t:#f1d273;
+  --full:#1f2421; --full-t:#7d867f; --off:#171b19; --p1:#ef5a62; --p0:#b49cff; --warn:#43360c;
+  color-scheme:dark;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:"IBM Plex Sans Thai","Leelawadee UI","Tahoma",system-ui,sans-serif;font-size:14px;line-height:1.45}
+header{background:var(--pine);color:#eef4ef;padding:10px 20px 8px;position:sticky;top:0;z-index:20}
+.row{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+h1{font-size:18px;font-weight:700;margin:0}
+.tag-static{background:#2a9d8f;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;letter-spacing:0.5px}
+.countdown{font-size:14px;font-weight:500;margin-left:auto}
+.countdown b{font-size:16px;color:#fbe7b0}
+.status{font-size:12px;opacity:.9;display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px}
+.alert-banner{margin-top:6px;padding:6px 12px;border-radius:6px;background:var(--ok);color:var(--ok-t);font-size:13px;font-weight:600;display:none;animation:pulse 1s infinite alternate}
+@keyframes pulse{from{transform:scale(0.99)}to{transform:scale(1.01)}}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin-top:6px;align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+header a{color:#fff;font-weight:500}
+.top{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;padding:10px 20px 0}
+.kpis{flex:1 1 640px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:8px 12px;min-width:0}
+.kpi.good{border-left-color:var(--ok-t)} .kpi.bad{border-left-color:var(--p1)} .kpi.mid{border-left-color:var(--some-t)}
+.kpi .k{font-size:12px;color:var(--muted)}
+.kpi .n{font-size:20px;font-weight:700;line-height:1.2;margin:2px 0}
+.kpi .s{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;flex-direction:column;gap:6px;min-width:210px;align-items:flex-start}
+.tools-row{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.btn{background:var(--card);border:1px solid var(--line);color:inherit;padding:6px 12px;border-radius:6px;
+  cursor:pointer;font-size:12px;font-weight:600;transition:background .15s}
+.btn:hover{background:var(--line)}
+.btn-sound{background:#2a9d8f;color:#fff;border-color:#2a9d8f}
+.btn-sound:hover{background:#21867a}
+.rfmsg{font-size:11px;color:var(--muted);min-height:16px}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;padding:12px 20px}
+.m-box{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px}
+.m-title{font-size:15px;font-weight:700;text-align:center;margin-bottom:8px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal-dow{font-size:11px;font-weight:700;color:var(--muted);padding:4px 0}
+.c{aspect-ratio:1;border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;
+  align-items:center;justify-content:space-between;padding:4px 2px;cursor:pointer;position:relative;user-select:none;transition:transform .1s,box-shadow .1s}
+.c:active{transform:scale(0.96)}
+.c.past{opacity:.35;cursor:default}
+.c.off{background:var(--off);color:var(--muted);cursor:default}
+.c.ok{background:var(--ok);color:var(--ok-t);font-weight:700}
+.c.some{background:var(--some);color:var(--some-t);font-weight:700}
+.c.full{background:var(--full);color:var(--full-t)}
+.c.p1{box-shadow:inset 0 0 0 2px var(--p1)}
+.c.p0{box-shadow:inset 0 0 0 3px var(--p0)}
+.c .day{font-size:13px;font-weight:600}
+.c .seats{font-size:11px}
+.c .wtag{position:absolute;top:2px;right:2px;font-size:9px;font-weight:700;padding:0 3px;border-radius:3px;color:#fff}
+.c.p1 .wtag{background:var(--p1)}
+.c.p0 .wtag{background:var(--p0)}
+.c .foot{width:100%;display:flex;justify-content:center}
+.c .book-link{display:block;background:var(--ok-t);color:#fff;border-radius:3px;padding:1px 4px;font-size:10px;font-weight:700;text-decoration:none}
+.list{background:var(--card);border:1px solid var(--line);border-radius:8px;margin:8px 20px 24px;padding:12px 16px}
+.list h2{font-size:15px;font-weight:700;margin:0 0 2px}
+.list .hint{font-size:12px;color:var(--muted);margin:0 0 10px}
+.rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px}
+.r{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:var(--full);font-size:13px;border-left:4px solid var(--line)}
+.r.ok{background:var(--ok);color:var(--ok-t)} .r.some{background:var(--some);color:var(--some-t)}
+.r.p1{border-left-color:var(--p1)} .r.p0{border-left-color:var(--p0)}
+.r .dt{font-weight:600}
+.r .av{font-weight:700;margin-left:auto}
+.r .tg{font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px}
+.tg.short{background:var(--p1);color:#fff} .tg.enough{background:var(--ok-t);color:#fff}
+.r .tm{font-size:11px;color:var(--muted)}
+.r a{color:inherit;font-size:12px;font-weight:700;text-decoration:none;background:rgba(0,0,0,0.06);padding:2px 6px;border-radius:4px}
+@media (max-width:600px){
+  header{padding:10px 12px}
+  .top{padding:10px 10px 0}
+  .kpis{grid-template-columns:1fr;gap:6px}
+  .tools{width:100%}
+  main{padding:10px;grid-template-columns:1fr}
+  .list{margin:8px 10px 24px}
+  .rows{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>ที่ว่าง ดอยหลวงเชียงดาว</h1>
+    <span class="tag-static">STATIC 100%</span>
+    <div class="countdown" id="countdown"></div>
+  </div>
+  <div class="status" id="status">กำลังเริ่มต้นระบบตรวจคิว...</div>
+  <div class="alert-banner" id="alert-banner"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--ok)"></i>ว่างพอสำหรับคุณ</span>
+    <span><i class="sw" style="background:var(--some)"></i>ว่างบ้าง แต่ไม่พอ</span>
+    <span><i class="sw" style="background:var(--full)"></i>เต็ม</span>
+    <span><i class="sw" style="border:2px solid var(--p1)"></i>P1 เช็กทุก 1 นาที</span>
+    <span><i class="sw" style="border:3px solid var(--p0)"></i>P0 เช็กทุก 30 วิ</span>
+    <span>คลิกวันที่เพื่อเปลี่ยนระดับเฝ้า</span>
+    <a href="https://q.wildlifesanctuaryfca16.com" target="_blank" rel="noopener">เปิดหน้าจอง ↗</a>
+  </div>
+</header>
+
+<div class="top">
+  <div class="kpis" id="kpis"></div>
+  <div class="tools">
+    <div class="tools-row">
+      <button class="btn btn-sound" id="btn-sound" type="button">🔔 เปิดเสียงแจ้งเตือน</button>
+      <button class="btn" id="btn-notif" type="button">📱 เปิดแจ้งเตือนหน้าจอ</button>
+    </div>
+    <div class="tools-row">
+      <button class="btn" id="rf-watch" type="button">↻ เช็กวันที่เฝ้าทันที</button>
+      <button class="btn" id="rf-all" type="button">↻ เช็กทั้งหมด</button>
+    </div>
+    <span class="rfmsg" id="rfmsg"></span>
+  </div>
+</div>
+
+<main id="cal"></main>
+
+<section class="list">
+  <h2>เทียบรายวัน</h2>
+  <p class="hint">วันที่เฝ้าทั้งหมด และทุกวันที่มีที่ว่าง เรียงตามวันที่</p>
+  <div class="rows" id="rows"></div>
+</section>
+
+<script>
+// ==================== ตั้งค่าเริ่มต้น ====================
+const API_URL = "https://q.wildlifesanctuaryfca16.com/api/v1/bookings/availability";
+const BOOKING_PAGE = "https://q.wildlifesanctuaryfca16.com";
+const START_DATE = "2026-11-16";
+const END_DATE = "2027-02-12";
+const BOOKING_CLOSE = new Date("2026-10-30T16:00:00+07:00").getTime();
+const PEOPLE = 1;
+
+const TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const DOW = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+const THS = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const pad = n => String(n).padStart(2, "0");
+const thDate = ds => { const [y,m,d] = ds.split("-").map(Number); return d + " " + THS[m-1] + " " + (y+543); };
+const ago = s => s < 60 ? Math.round(s) + " วิ" : Math.round(s/60) + " นาที";
+
+// ข้อมูลสถานะในเครื่อง
+let datesData = {}; // { 'YYYY-MM-DD': { available, capacity, updated, ts } }
+let watchDates = JSON.parse(localStorage.getItem("doiluang_watch") || '{"2027-01-23":"P1","2027-01-24":"P1","2027-01-30":"P1","2027-01-31":"P1"}');
+let nextDue = {};
+let isChecking = false;
+let checkCount = 0;
+let soundEnabled = false;
+let audioCtx = null;
+let alertedDates = new Set();
+
+// รายการวันทั้งหมด
+function getAllDates() {
+  const dates = [];
+  let d = new Date(START_DATE);
+  const end = new Date(END_DATE);
+  while (d <= end) {
+    if (d.getDay() !== 3) { // วันพุธปิด
+      dates.push(d.toISOString().slice(0, 10));
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return dates;
+}
+
+const allDates = getAllDates();
+const todayStr = new Date().toISOString().slice(0, 10);
+
+// ==================== ระบบเสียงและแจ้งเตือน ====================
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+}
+
+function playAlarmSound() {
+  if (!soundEnabled) return;
+  try {
+    initAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+  } catch(e) {}
+}
+
+document.getElementById("btn-sound").onclick = () => {
+  initAudio();
+  soundEnabled = !soundEnabled;
+  const btn = document.getElementById("btn-sound");
+  if (soundEnabled) {
+    btn.textContent = "🔊 เสียงแจ้งเตือน: เปิดอยู่";
+    btn.style.background = "#0f5a32";
+    playAlarmSound();
+  } else {
+    btn.textContent = "🔔 เปิดเสียงแจ้งเตือน";
+    btn.style.background = "#2a9d8f";
+  }
+};
+
+document.getElementById("btn-notif").onclick = async () => {
+  if (!("Notification" in window)) {
+    alert("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน");
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  const btn = document.getElementById("btn-notif");
+  if (perm === "granted") {
+    btn.textContent = "✓ แจ้งเตือนหน้าจอ: เปิดแล้ว";
+    new Notification("ดอยหลวงเชียงดาว", { body: "เปิดระบบแจ้งเตือนสำเร็จ" });
+  } else {
+    alert("ไม่ได้รับอนุญาตให้แจ้งเตือน");
+  }
+};
+
+// ==================== การดึงข้อมูลจาก API โดยตรง ====================
+async function checkDate(dateStr) {
+  try {
+    const res = await fetch(`${API_URL}?date=${dateStr}`, {
+      headers: { "Accept": "application/json" }
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    if (json && json.data) {
+      const avail = json.data.available ?? 0;
+      const cap = json.data.capacity ?? 100;
+      const nowTs = Date.now() / 1000;
+      const nowTime = new Date().toLocaleTimeString("th-TH");
+      datesData[dateStr] = {
+        available: avail,
+        capacity: cap,
+        updated: nowTime,
+        ts: nowTs
+      };
+      checkCount++;
+
+      // แจ้งเตือนหากมีที่ว่าง
+      if (avail >= PEOPLE && !alertedDates.has(dateStr)) {
+        alertedDates.add(dateStr);
+        triggerSlotAlert(dateStr, avail);
+      } else if (avail < PEOPLE) {
+        alertedDates.delete(dateStr);
+      }
+      return true;
+    }
+  } catch(e) {
+    console.warn("Check error:", dateStr, e);
+  }
+  return false;
+}
+
+function triggerSlotAlert(dateStr, avail) {
+  playAlarmSound();
+  const banner = document.getElementById("alert-banner");
+  banner.style.display = "block";
+  banner.innerHTML = `🎉 <b>พบที่ว่าง!</b> วันที่ ${thDate(dateStr)} ว่าง ${avail} ที่! <a href="${BOOKING_PAGE}/#d=${dateStr}&n=${PEOPLE}" target="_blank" style="color:var(--ok-t);text-decoration:underline;margin-left:10px">กดจองทันที ↗</a>`;
+
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(`ดอยหลวงเชียงดาว มีที่ว่าง!`, {
+      body: `วันที่ ${thDate(dateStr)} ว่าง ${avail} ที่ กดจองด่วน!`,
+      icon: "https://q.wildlifesanctuaryfca16.com/favicon.ico"
+    });
+  }
+}
+
+// วนลูปเช็กคิวอัตโนมัติ (Queue Worker)
+async function queueLoop() {
+  const now = Date.now() / 1000;
+  
+  // 1. หาวันที่ต้องเช็ก
+  // ลำดับความสำคัญ: วันที่เฝ้า P0 (30 วิ) > P1 (60 วิ) > วันอื่น ๆ (10 นาที)
+  let targetDate = null;
+  
+  // ตรวจวันที่เฝ้าก่อน
+  for (const [d, lvl] of Object.entries(watchDates)) {
+    if (d < todayStr) continue;
+    const interval = lvl === "P0" ? 30 : 60;
+    const due = nextDue[d] || 0;
+    if (now >= due) {
+      targetDate = d;
+      nextDue[d] = now + interval;
+      break;
+    }
+  }
+
+  // ถ้าไม่มีวันที่เฝ้าที่ครบกำหนด ให้เช็กวันอื่น ๆ ในปฏิทิน
+  if (!targetDate) {
+    for (const d of allDates) {
+      if (d < todayStr) continue;
+      const due = nextDue[d] || 0;
+      if (now >= due) {
+        targetDate = d;
+        nextDue[d] = now + 600; // 10 นาที
+        break;
+      }
+    }
+  }
+
+  if (targetDate) {
+    document.getElementById("status").textContent = `กำลังตรวจวันที่ ${thDate(targetDate)}... (ตรวจแล้ว ${checkCount} ครั้ง)`;
+    await checkDate(targetDate);
+    render();
+  } else {
+    document.getElementById("status").textContent = `กำลังเฝ้าตรวจคิวอัตโนมัติ... (ตรวจแล้ว ${checkCount} ครั้ง)`;
+  }
+
+  // หน่วงเวลา 2.5 วินาที เพื่อไม่ให้ยิงเกินงบ 25-30 requests/min
+  setTimeout(queueLoop, 2500);
+}
+
+// ==================== เรนเดอร์หน้าเว็บ ====================
+function toggleWatch(ds) {
+  const cur = watchDates[ds];
+  const next = { undefined: "P1", "P1": "P0", "P0": undefined }[cur];
+  if (next) {
+    watchDates[ds] = next;
+    nextDue[ds] = 0; // ให้เช็กทันที
+  } else {
+    delete watchDates[ds];
+    alertedDates.delete(ds);
+  }
+  localStorage.setItem("doiluang_watch", JSON.stringify(watchDates));
+  render();
+}
+
+function kpi(cls, k, n, s) {
+  return `<div class="kpi ${cls}"><div class="k">${k}</div><div class="n">${n}</div><div class="s">${s}</div></div>`;
+}
+
+function render() {
+  const openDays = Object.entries(datesData).filter(([d, x]) => d >= todayStr && x.available > 0);
+  const totalSeats = openDays.reduce((sum, [, x]) => sum + x.available, 0);
+  const activeWatches = Object.keys(watchDates).filter(d => d >= todayStr);
+  const enoughWatches = activeWatches.filter(d => datesData[d] && datesData[d].available >= PEOPLE);
+
+  // KPIs
+  document.getElementById("kpis").innerHTML = 
+    kpi(openDays.length ? "good" : "", "วันที่ยังว่าง", openDays.length + " วัน", `รวม ${totalSeats} ที่ จาก ${Object.keys(datesData).length} วันที่เช็กแล้ว`) +
+    kpi(enoughWatches.length ? "good" : (activeWatches.length ? "bad" : ""), `วันที่เฝ้าที่ว่างพอ (${PEOPLE} คน)`, `${enoughWatches.length} / ${activeWatches.length}`, enoughWatches.length ? enoughWatches.map(thDate).join(", ") : "ยังไม่มี") +
+    kpi("", "จำนวนการเช็กสะสม", `${checkCount} ครั้ง`, "ยิงเช็กตรงจากเบราว์เซอร์");
+
+  // เทียบรายวัน
+  const rowDates = [...new Set([...activeWatches, ...openDays.map(([d]) => d)])].sort();
+  document.getElementById("rows").innerHTML = rowDates.length ? rowDates.map(d => {
+    const x = datesData[d] || {};
+    const w = watchDates[d];
+    const av = x.available;
+    const cls = (av == null ? "" : av >= PEOPLE ? "ok" : av > 0 ? "some" : "") + (w ? " " + w.toLowerCase() : "");
+    let tg = "";
+    if (w && av != null) {
+      tg = av >= PEOPLE ? '<span class="tg enough">พอ</span>' : `<span class="tg short">ขาด ${PEOPLE - av}</span>`;
+    }
+    const link = av > 0 ? `<a href="${BOOKING_PAGE}/#d=${d}&n=${PEOPLE}" target="_blank" rel="noopener">จอง →</a>` : "";
+    return `<div class="r ${cls}">
+      <span class="dt">${thDate(d)}</span>
+      <span class="av">${av == null ? "…" : av + " / " + (x.capacity || 100)}</span>
+      ${w ? `<span>${w}</span>` : ""}
+      ${tg}
+      ${link}
+      <span class="tm">${x.updated || ""}</span>
+    </div>`;
+  }).join("") : '<div style="color:var(--muted);font-size:12px;padding:8px">ยังไม่มีวันที่ว่างหรือวันที่กดเฝ้า</div>';
+
+  // ปฏิทินรายเดือน
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const cal = document.getElementById("cal");
+  cal.innerHTML = "";
+
+  const months = [
+    { y: 2026, m: 11 },
+    { y: 2026, m: 12 },
+    { y: 2027, m: 1 },
+    { y: 2027, m: 2 }
+  ];
+
+  for (const item of months) {
+    const box = document.createElement("div");
+    box.className = "m-box";
+    box.innerHTML = `<div class="m-title">${TH[item.m - 1]} ${item.y + 543}</div>`;
+
+    const g = document.createElement("div");
+    g.className = "cal-grid";
+    DOW.forEach(w => {
+      const el = document.createElement("div");
+      el.className = "cal-dow";
+      el.textContent = w;
+      g.appendChild(el);
+    });
+
+    const firstDay = new Date(item.y, item.m - 1, 1).getDay();
+    const totalDays = new Date(item.y, item.m, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+      const padEl = document.createElement("div");
+      g.appendChild(padEl);
+    }
+
+    for (let day = 1; day <= totalDays; day++) {
+      const ds = `${item.y}-${pad(item.m)}-${pad(day)}`;
+      const c = document.createElement("div");
+      c.className = "c";
+
+      const dow = new Date(item.y, item.m - 1, day).getDay();
+      const inRange = ds >= START_DATE && ds <= END_DATE;
+      const isWed = dow === 3;
+      const isPast = ds < todayStr;
+
+      if (!inRange || isWed) {
+        c.classList.add("off");
+      } else if (isPast) {
+        c.classList.add("past");
+      } else {
+        const x = datesData[ds];
+        const w = watchDates[ds];
+        if (w) c.classList.add(w.toLowerCase());
+        if (x && x.available != null) {
+          if (x.available >= PEOPLE) c.classList.add("ok");
+          else if (x.available > 0) c.classList.add("some");
+          else c.classList.add("full");
+        }
+        c.onclick = () => toggleWatch(ds);
+      }
+
+      const w = watchDates[ds];
+      const x = datesData[ds];
+      c.innerHTML = `
+        <span class="day">${day}</span>
+        <span class="seats">${x && x.available != null ? x.available : "·"}</span>
+        ${w ? `<span class="wtag">${w}</span>` : ""}
+        <div class="foot">
+          ${x && x.available > 0 ? `<a class="book-link" href="${BOOKING_PAGE}/#d=${ds}&n=${PEOPLE}" target="_blank" onclick="event.stopPropagation()">จอง</a>` : ""}
+        </div>
+      `;
+      g.appendChild(c);
+    }
+
+    box.appendChild(g);
+    cal.appendChild(box);
+  }
+}
+
+// นับถอยหลังปิดรับจอง
+function tick() {
+  const diff = BOOKING_CLOSE - Date.now();
+  const cd = document.getElementById("countdown");
+  if (diff <= 0) {
+    cd.innerHTML = "<b>ระบบปิดรับจองแล้ว</b>";
+    return;
+  }
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  cd.innerHTML = `ปิดรับจองใน <b>${d} วัน ${h}:${pad(m)}:${pad(s)}</b>`;
+}
+
+// ปุ่มเครื่องมือ
+document.getElementById("rf-watch").onclick = () => {
+  for (const d of Object.keys(watchDates)) nextDue[d] = 0;
+  document.getElementById("rfmsg").textContent = "ตั้งคิวเช็กวันที่เฝ้าทันทีแล้ว";
+  setTimeout(() => document.getElementById("rfmsg").textContent = "", 4000);
+};
+
+document.getElementById("rf-all").onclick = () => {
+  for (const d of allDates) nextDue[d] = 0;
+  document.getElementById("rfmsg").textContent = "ตั้งคิวเช็กทุกวันในปฏิทินแล้ว";
+  setTimeout(() => document.getElementById("rfmsg").textContent = "", 4000);
+};
+
+// เริ่มต้นระบบ
+setInterval(tick, 1000);
+tick();
+render();
+queueLoop();
+</script>
+</body>
+</html>
