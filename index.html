@@ -203,7 +203,14 @@ const ago = s => s < 60 ? Math.round(s) + " วิ" : Math.round(s/60) + " น�
 
 // ข้อมูลสถานะในเครื่อง (โหลดจาก Cache ในเครื่องทันที หน้าเว็บจะไม่ค้างว่างเปล่า)
 let datesData = JSON.parse(localStorage.getItem("doiluang_dates_cache") || "{}");
-let watchDates = JSON.parse(localStorage.getItem("doiluang_watch") || '{"2027-01-23":"P1","2027-01-24":"P1","2027-01-30":"P1","2027-01-31":"P1"}');
+let rawWatch = localStorage.getItem("doiluang_watch");
+// เริ่มต้นแบบไม่มีการเลือกวันใดๆ (ว่างเปล่า 100%) เพื่อให้ผู้ใช้คลิกเลือกเอง
+let watchDates = {};
+if (rawWatch && rawWatch !== '{"2027-01-23":"P1","2027-01-24":"P1","2027-01-30":"P1","2027-01-31":"P1"}') {
+  try { watchDates = JSON.parse(rawWatch); } catch(e) { watchDates = {}; }
+} else {
+  localStorage.setItem("doiluang_watch", "{}");
+}
 let slotHistory = JSON.parse(localStorage.getItem("doiluang_slot_history") || "[]");
 let prevAvailMap = {};
 let nextDue = {};
@@ -522,7 +529,7 @@ function render() {
       ${link}
       <span class="tm">${x.updated || ""}</span>
     </div>`;
-  }).join("") : '<div style="color:var(--muted);font-size:12px;padding:8px">ยังไม่มีวันที่ว่างหรือวันที่กดเฝ้า</div>';
+  }).join("") : '<div style="color:var(--muted);font-size:13px;padding:12px;background:var(--full);border-radius:6px;text-align:center">ยังไม่มีวันที่เลือกเฝ้า (คลิกวันที่บนปฏิทินเพื่อเริ่มเฝ้า)</div>';
 
   // ปฏิทินรายเดือน
   renderCalendar();
