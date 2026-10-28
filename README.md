@@ -2,7 +2,7 @@
 title: Doi Luang Slot 2026
 emoji: 🏔️
 colorFrom: green
-colorTo: emerald
+colorTo: blue
 sdk: static
 pinned: false
 ---
