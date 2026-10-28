@@ -85,7 +85,35 @@ main{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1
 .tg.short{background:var(--p1);color:#fff} .tg.enough{background:var(--ok-t);color:#fff}
 .r .tm{font-size:11px;color:var(--muted)}
 .r a{color:inherit;font-size:12px;font-weight:700;text-decoration:none;background:rgba(0,0,0,0.06);padding:2px 6px;border-radius:4px}
+/* History Dashboard */
+.hist-section{background:var(--card);border:1px solid var(--line);border-radius:8px;margin:12px 20px 0;padding:12px 16px}
+.hist-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.hist-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+.hist-badge{background:#0f5a32;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px}
+.hist-tools{display:flex;gap:6px;align-items:center}
+.btn-sm{padding:4px 8px;font-size:11px}
+.hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.hist-item{background:var(--full);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:6px;padding:8px 12px;display:flex;flex-direction:column;gap:4px;transition:box-shadow .15s}
+.hist-item:hover{box-shadow:0 2px 6px rgba(0,0,0,0.06)}
+.hist-item.live{border-left-color:#0f5a32;background:rgba(207,238,221,0.25)}
+.hist-row1{display:flex;justify-content:space-between;align-items:baseline}
+.hist-rel{font-size:12px;font-weight:700;color:var(--p1)}
+.hist-rel.fresh{color:#0f5a32;display:flex;align-items:center;gap:4px}
+.hist-pulse{width:6px;height:6px;background:#0f5a32;border-radius:50%;display:inline-block;animation:pulse-dot 1s infinite}
+@keyframes pulse-dot{0%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.4)}100%{opacity:1;transform:scale(1)}}
+.hist-time{font-size:11px;color:var(--muted)}
+.hist-row2{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+.hist-date{font-size:14px;font-weight:700}
+.hist-seats{font-size:12px;font-weight:700;color:var(--ok-t)}
+.hist-row3{display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-top:4px;border-top:1px dashed var(--line);font-size:11px}
+.hist-curr{font-weight:500}
+.hist-curr.is-open{color:#0f5a32;font-weight:700}
+.hist-curr.is-full{color:var(--muted)}
+.hist-book{background:var(--ok-t);color:#fff;padding:2px 8px;border-radius:4px;font-weight:700;text-decoration:none;font-size:11px}
+.empty-hist{text-align:center;padding:16px;color:var(--muted);font-size:13px;grid-column:1/-1}
 @media (max-width:600px){
+  .hist-section{margin:8px 10px 0}
+  .hist-grid{grid-template-columns:1fr}
   header{padding:10px 12px}
   .top{padding:10px 10px 0}
   .kpis{grid-template-columns:1fr;gap:6px}
@@ -131,6 +159,23 @@ main{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1
   </div>
 </div>
 
+<section class="hist-section" id="hist-section">
+  <div class="hist-head">
+    <div class="hist-title">
+      <span>📜</span>
+      <span>ประวัติที่ว่างหลุดจองล่าสุด (Slot History)</span>
+      <span class="hist-badge" id="hist-badge">0 รายการ</span>
+    </div>
+    <div class="hist-tools">
+      <button class="btn btn-sm" id="btn-mock-hist" type="button" title="ทดลองเพิ่มข้อมูลจำลองเพื่อดูหน้าตา">🧪 ทดสอบเพิ่มประวัติ</button>
+      <button class="btn btn-sm" id="btn-clear-hist" type="button">ล้างประวัติ</button>
+    </div>
+  </div>
+  <div class="hist-grid" id="hist-grid">
+    <div class="empty-hist">ยังไม่มีประวัติที่ว่างหลุดจอง (ระบบจะบันทึกอัตโนมัติทันทีที่มีคนสละสิทธิ์)</div>
+  </div>
+</section>
+
 <main id="cal"></main>
 
 <section class="list">
@@ -158,12 +203,96 @@ const ago = s => s < 60 ? Math.round(s) + " วิ" : Math.round(s/60) + " น�
 // ข้อมูลสถานะในเครื่อง
 let datesData = {}; // { 'YYYY-MM-DD': { available, capacity, updated, ts } }
 let watchDates = JSON.parse(localStorage.getItem("doiluang_watch") || '{"2027-01-23":"P1","2027-01-24":"P1","2027-01-30":"P1","2027-01-31":"P1"}');
+let slotHistory = JSON.parse(localStorage.getItem("doiluang_slot_history") || "[]");
+let prevAvailMap = {};
 let nextDue = {};
 let isChecking = false;
 let checkCount = 0;
 let soundEnabled = false;
 let audioCtx = null;
 let alertedDates = new Set();
+
+// ==================== ระบบประวัติที่ว่าง (Slot History) ====================
+function formatTimeAgo(ts) {
+  const now = Date.now() / 1000;
+  const diff = Math.max(0, Math.floor(now - ts));
+  if (diff < 15) return "เมื่อสักครู่";
+  if (diff < 60) return `เมื่อ ${diff} วินาทีที่แล้ว`;
+  const m = Math.floor(diff / 60);
+  if (m < 60) return `เมื่อ ${m} นาทีที่แล้ว`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `เมื่อ ${h} ชั่วโมงที่แล้ว`;
+  const d = Math.floor(h / 24);
+  return `เมื่อ ${d} วันที่แล้ว`;
+}
+
+function addSlotHistory(dateStr, seats) {
+  const now = Date.now() / 1000;
+  const recent = slotHistory.find(h => h.date === dateStr && (now - h.ts < 90));
+  if (recent) return;
+
+  const item = {
+    id: Date.now() + "-" + Math.floor(Math.random() * 1000),
+    date: dateStr,
+    seats: seats,
+    ts: now,
+    timeStr: new Date().toLocaleTimeString("th-TH")
+  };
+  slotHistory.unshift(item);
+  if (slotHistory.length > 30) slotHistory.pop();
+  localStorage.setItem("doiluang_slot_history", JSON.stringify(slotHistory));
+  renderHistory();
+}
+
+function renderHistory() {
+  const badge = document.getElementById("hist-badge");
+  const grid = document.getElementById("hist-grid");
+  if (!badge || !grid) return;
+  badge.textContent = `${slotHistory.length} รายการ`;
+
+  if (!slotHistory.length) {
+    grid.innerHTML = '<div class="empty-hist">ยังไม่มีประวัติที่ว่างหลุดจอง (ระบบจะบันทึกอัตโนมัติทันทีที่มีคนสละสิทธิ์)</div>';
+    return;
+  }
+
+  const now = Date.now() / 1000;
+  grid.innerHTML = slotHistory.map(item => {
+    const age = now - item.ts;
+    const isFresh = age < 300;
+    const currentData = datesData[item.date];
+    const isStillAvailable = currentData && currentData.available > 0;
+    const currentSeats = currentData ? currentData.available : null;
+    
+    let currStatusHtml = '';
+    if (isStillAvailable) {
+      currStatusHtml = `<span class="hist-curr is-open">🟢 ตอนนี้: ยังว่าง (${currentSeats} ที่)</span>`;
+    } else if (currentSeats === 0) {
+      currStatusHtml = `<span class="hist-curr is-full">⚪ ตอนนี้: เต็มแล้ว</span>`;
+    } else {
+      currStatusHtml = `<span class="hist-curr">⏳ ยังไม่ได้ตรวจซ้ำ</span>`;
+    }
+
+    return `
+      <div class="hist-item ${isStillAvailable ? 'live' : ''}">
+        <div class="hist-row1">
+          <span class="hist-rel ${isFresh ? 'fresh' : ''}">
+            ${isFresh ? '<span class="hist-pulse"></span>' : ''}
+            ${formatTimeAgo(item.ts)}
+          </span>
+          <span class="hist-time">บันทึกเวลา ${item.timeStr}</span>
+        </div>
+        <div class="hist-row2">
+          <span class="hist-date">${thDate(item.date)}</span>
+          <span class="hist-seats">พบว่าง ${item.seats} ที่</span>
+        </div>
+        <div class="hist-row3">
+          ${currStatusHtml}
+          <a class="hist-book" href="${BOOKING_PAGE}/#d=${item.date}&n=${PEOPLE}" target="_blank" rel="noopener">จอง →</a>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
 
 // รายการวันทั้งหมด
 function getAllDates() {
@@ -261,6 +390,12 @@ async function checkDate(dateStr) {
       checkCount++;
 
       // แจ้งเตือนหากมีที่ว่าง
+      const prev = prevAvailMap[dateStr] ?? null;
+      if (avail > 0 && (prev === null || avail > prev || prev === 0)) {
+        addSlotHistory(dateStr, avail);
+      }
+      prevAvailMap[dateStr] = avail;
+
       if (avail >= PEOPLE && !alertedDates.has(dateStr)) {
         alertedDates.add(dateStr);
         triggerSlotAlert(dateStr, avail);
@@ -496,11 +631,30 @@ document.getElementById("rf-all").onclick = () => {
   setTimeout(() => document.getElementById("rfmsg").textContent = "", 4000);
 };
 
+// จัดการปุ่ม History Dashboard
+document.getElementById("btn-clear-hist").onclick = () => {
+  if (confirm("ต้องการล้างประวัติที่ว่างทั้งหมดหรือไม่?")) {
+    slotHistory = [];
+    localStorage.removeItem("doiluang_slot_history");
+    renderHistory();
+  }
+};
+
+document.getElementById("btn-mock-hist").onclick = () => {
+  const sampleDates = ["2027-01-23", "2027-01-16", "2026-12-05", "2027-02-06", "2027-01-30"];
+  const randomDate = sampleDates[Math.floor(Math.random() * sampleDates.length)];
+  const randomSeats = Math.floor(Math.random() * 2) + 1;
+  addSlotHistory(randomDate, randomSeats);
+};
+
 // เริ่มต้นระบบ
 setInterval(tick, 1000);
+setInterval(renderHistory, 5000); // อัปเดตเวลา "เมื่อ ... นาทีที่แล้ว" อัตโนมัติทุก 5 วิ
 tick();
 render();
+renderHistory();
 queueLoop();
 </script>
 </body>
 </html>
+
