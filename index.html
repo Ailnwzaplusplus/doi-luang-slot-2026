@@ -152,8 +152,9 @@ main{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1
       <button class="btn" id="btn-notif" type="button">📱 เปิดแจ้งเตือนหน้าจอ</button>
     </div>
     <div class="tools-row">
-      <button class="btn" id="rf-watch" type="button">↻ เช็กวันที่เฝ้าทันที</button>
+      <button class="btn" id="rf-watch" type="button">↻ เช็กวันที่เฝ้า</button>
       <button class="btn" id="rf-all" type="button">↻ เช็กทั้งหมด</button>
+      <button class="btn" id="btn-clear-watches" type="button" title="ยกเลิกการเฝ้าทุกวันที่เลือกไว้">❌ ล้างวันที่เฝ้า</button>
     </div>
     <span class="rfmsg" id="rfmsg"></span>
   </div>
@@ -200,8 +201,8 @@ const pad = n => String(n).padStart(2, "0");
 const thDate = ds => { const [y,m,d] = ds.split("-").map(Number); return d + " " + THS[m-1] + " " + (y+543); };
 const ago = s => s < 60 ? Math.round(s) + " วิ" : Math.round(s/60) + " นาที";
 
-// ข้อมูลสถานะในเครื่อง
-let datesData = {}; // { 'YYYY-MM-DD': { available, capacity, updated, ts } }
+// ข้อมูลสถานะในเครื่อง (โหลดจาก Cache ในเครื่องทันที หน้าเว็บจะไม่ค้างว่างเปล่า)
+let datesData = JSON.parse(localStorage.getItem("doiluang_dates_cache") || "{}");
 let watchDates = JSON.parse(localStorage.getItem("doiluang_watch") || '{"2027-01-23":"P1","2027-01-24":"P1","2027-01-30":"P1","2027-01-31":"P1"}');
 let slotHistory = JSON.parse(localStorage.getItem("doiluang_slot_history") || "[]");
 let prevAvailMap = {};
@@ -388,6 +389,7 @@ async function checkDate(dateStr) {
         ts: nowTs
       };
       checkCount++;
+      localStorage.setItem("doiluang_dates_cache", JSON.stringify(datesData));
 
       // แจ้งเตือนหากมีที่ว่าง
       const prev = prevAvailMap[dateStr] ?? null;
@@ -647,12 +649,32 @@ document.getElementById("btn-mock-hist").onclick = () => {
   addSlotHistory(randomDate, randomSeats);
 };
 
+document.getElementById("btn-clear-watches").onclick = () => {
+  if (confirm("ต้องการยกเลิกการเฝ้าทุกวันที่เลือกไว้หรือไม่?")) {
+    watchDates = {};
+    localStorage.setItem("doiluang_watch", JSON.stringify(watchDates));
+    render();
+  }
+};
+
+// โหลดข้อมูลวันที่เฝ้าทันทีตอนเปิดหน้าเว็บ (ไม่ต้องรอวนทีละวัน)
+async function initialFastCheck() {
+  const wd = Object.keys(watchDates).filter(d => d >= todayStr);
+  if (wd.length) {
+    document.getElementById("status").textContent = `กำลังโหลดข้อมูลวันที่เฝ้า ${wd.length} วัน...`;
+    await Promise.all(wd.map(d => checkDate(d)));
+    render();
+    renderHistory();
+  }
+}
+
 // เริ่มต้นระบบ
 setInterval(tick, 1000);
 setInterval(renderHistory, 5000); // อัปเดตเวลา "เมื่อ ... นาทีที่แล้ว" อัตโนมัติทุก 5 วิ
 tick();
 render();
 renderHistory();
+initialFastCheck();
 queueLoop();
 </script>
 </body>
