@@ -433,50 +433,88 @@ function triggerSlotAlert(dateStr, avail) {
   }
 }
 
-// วนลูปเช็กคิวอัตโนมัติ (Queue Worker)
-async function queueLoop() {
+// ==================== วนลูปเช็กคิวอัตโนมัติ (Queue Worker) ====================
+let isCheckingQueue = false;
+
+async function stepQueue(forceCheck = false) {
+  if (isCheckingQueue) return;
   const now = Date.now() / 1000;
   
-  // 1. หาวันที่ต้องเช็ก
-  // ลำดับความสำคัญ: วันที่เฝ้า P0 (30 วิ) > P1 (60 วิ) > วันอื่น ๆ (10 นาที)
+  // 1. หาวันที่ต้องเช็กตามลำดับความสำคัญ (P0 ทุก 30 วิ > P1 ทุก 60 วิ)
   let targetDate = null;
-  
-  // ตรวจวันที่เฝ้าก่อน
   for (const [d, lvl] of Object.entries(watchDates)) {
     if (d < todayStr) continue;
     const interval = lvl === "P0" ? 30 : 60;
     const due = nextDue[d] || 0;
-    if (now >= due) {
+    if (now >= due || forceCheck) {
       targetDate = d;
       nextDue[d] = now + interval;
       break;
     }
   }
 
-  // ถ้าไม่มีวันที่เฝ้าที่ครบกำหนด ให้เช็กวันอื่น ๆ ในปฏิทิน
+  // 2. ถ้าไม่มีวันที่เฝ้าที่ครบกำหนด ให้เช็กวันอื่น ๆ ในปฏิทิน
   if (!targetDate) {
     for (const d of allDates) {
       if (d < todayStr) continue;
       const due = nextDue[d] || 0;
       if (now >= due) {
         targetDate = d;
-        nextDue[d] = now + 600; // 10 นาที
+        nextDue[d] = now + 180; // เช็กซ้ำทุก 3 นาที (จากเดิม 10 นาที)
         break;
       }
     }
   }
 
-  if (targetDate) {
-    document.getElementById("status").textContent = `กำลังตรวจวันที่ ${thDate(targetDate)}... (ตรวจแล้ว ${checkCount} ครั้ง)`;
-    await checkDate(targetDate);
-    render();
-  } else {
-    document.getElementById("status").textContent = `กำลังเฝ้าตรวจคิวอัตโนมัติ... (ตรวจแล้ว ${checkCount} ครั้ง)`;
+  // 3. ถ้าเช็กครบทุกวันในรอบนี้แล้ว (ไม่มี targetDate ที่ถึงกำหนด)
+  if (!targetDate) {
+    let minDue = Infinity;
+    for (const d of allDates) {
+      if (d < todayStr) continue;
+      const due = nextDue[d] || 0;
+      if (due < minDue) minDue = due;
+    }
+    for (const [d] of Object.entries(watchDates)) {
+      if (d < todayStr) continue;
+      const due = nextDue[d] || 0;
+      if (due < minDue) minDue = due;
+    }
+    const waitSec = Math.max(1, Math.round(minDue - now));
+    document.getElementById("status").textContent = `✓ ตรวจครบ 1 รอบแล้ว ➔ รอบถัดไปจะเริ่มในอีก ${waitSec} วินาที... (เช็กสะสม ${checkCount} ครั้ง)`;
+    return;
   }
 
-  // หน่วงเวลา 2.5 วินาที เพื่อไม่ให้ยิงเกินงบ 25-30 requests/min
-  setTimeout(queueLoop, 2500);
+  // 4. ทำการเช็กวันที่เป้าหมาย
+  isCheckingQueue = true;
+  document.getElementById("status").textContent = `กำลังตรวจวันที่ ${thDate(targetDate)}... (ตรวจแล้ว ${checkCount} ครั้ง)`;
+  try {
+    await checkDate(targetDate);
+    render();
+  } catch(e) {
+    console.warn("Queue error:", e);
+  } finally {
+    isCheckingQueue = false;
+  }
 }
+
+// ระบบ Web Worker ทำงานใน Background Thread: ป้องกันเบราว์เซอร์แช่แข็งเมื่อพับจอ (Minimize) หรือสลับแท็บ
+try {
+  const workerBlob = new Blob([`
+    let timer = setInterval(() => { self.postMessage('tick'); }, 2200);
+  `], { type: 'application/javascript' });
+  const bgWorker = new Worker(URL.createObjectURL(workerBlob));
+  bgWorker.onmessage = () => { stepQueue(); };
+} catch(e) {
+  // Fallback ปกติถ้าเบราว์เซอร์ไม่รองรับ
+  setInterval(() => { stepQueue(); }, 2200);
+}
+
+// ตรวจจับเมื่อผู้ใช้เปิดจอกลับมา ให้เช็กทันที
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    stepQueue(true);
+  }
+});
 
 // ==================== เรนเดอร์หน้าเว็บ ====================
 function toggleWatch(ds) {
@@ -682,7 +720,7 @@ tick();
 render();
 renderHistory();
 initialFastCheck();
-queueLoop();
+stepQueue();
 </script>
 </body>
 </html>
