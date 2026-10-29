@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.py[cod]
+*.log
+.venv/
+venv/
+.idea/
+.vscode/
+events.csv
+*.bak
