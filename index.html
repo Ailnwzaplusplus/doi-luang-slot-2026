@@ -137,8 +137,8 @@ main{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1
     <span><i class="sw" style="background:var(--ok)"></i>ว่างพอสำหรับคุณ</span>
     <span><i class="sw" style="background:var(--some)"></i>ว่างบ้าง แต่ไม่พอ</span>
     <span><i class="sw" style="background:var(--full)"></i>เต็ม</span>
-    <span><i class="sw" style="border:2px solid var(--p1)"></i>P1 เช็กทุก 1 นาที</span>
-    <span><i class="sw" style="border:3px solid var(--p0)"></i>P0 เช็กทุก 30 วิ</span>
+    <span><i class="sw" style="border:2px solid var(--p1)"></i>P1 เช็กทุก 30 วิ</span>
+    <span><i class="sw" style="border:3px solid var(--p0)"></i>P0 เช็กทุก 10 วิ</span>
     <span>คลิกวันที่เพื่อเปลี่ยนระดับเฝ้า</span>
     <a href="https://q.wildlifesanctuaryfca16.com" target="_blank" rel="noopener">เปิดหน้าจอง ↗</a>
   </div>
@@ -192,7 +192,7 @@ const BOOKING_PAGE = "https://q.wildlifesanctuaryfca16.com";
 const START_DATE = "2026-11-16";
 const END_DATE = "2027-02-12";
 const BOOKING_CLOSE = new Date("2026-10-30T16:00:00+07:00").getTime();
-const PEOPLE = 1;
+const PEOPLE = 2;
 
 const TH = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 const DOW = ["อา","จ","อ","พ","พฤ","ศ","ส"];
@@ -204,13 +204,13 @@ const ago = s => s < 60 ? Math.round(s) + " วิ" : Math.round(s/60) + " น�
 // ข้อมูลสถานะในเครื่อง (โหลดจาก Cache ในเครื่องทันที หน้าเว็บจะไม่ค้างว่างเปล่า)
 let datesData = JSON.parse(localStorage.getItem("doiluang_dates_cache") || "{}");
 let rawWatch = localStorage.getItem("doiluang_watch");
-// เริ่มต้นแบบไม่มีการเลือกวันใดๆ (ว่างเปล่า 100%) เพื่อให้ผู้ใช้คลิกเลือกเอง
-let watchDates = {};
-if (rawWatch && rawWatch !== '{"2027-01-23":"P1","2027-01-24":"P1","2027-01-30":"P1","2027-01-31":"P1"}') {
-  try { watchDates = JSON.parse(rawWatch); } catch(e) { watchDates = {}; }
-} else {
-  localStorage.setItem("doiluang_watch", "{}");
+// วันเฝ้าเริ่มต้น (ถ้าเบราว์เซอร์ยังไม่เคยบันทึก) หลังจากนั้นคลิกบนปฏิทินเพื่อแก้ได้
+const DEFAULT_WATCH = {"2026-12-05":"P0","2026-12-06":"P0","2026-12-12":"P1","2026-12-13":"P1","2026-12-19":"P1","2026-12-20":"P1","2026-12-26":"P1","2026-12-27":"P1","2027-01-16":"P0","2027-01-17":"P0","2027-01-23":"P0","2027-01-24":"P0"};
+let watchDates = DEFAULT_WATCH;
+if (rawWatch) {
+  try { watchDates = JSON.parse(rawWatch); } catch(e) { watchDates = DEFAULT_WATCH; }
 }
+localStorage.setItem("doiluang_watch", JSON.stringify(watchDates));
 let slotHistory = JSON.parse(localStorage.getItem("doiluang_slot_history") || "[]");
 let prevAvailMap = {};
 let nextDue = {};
@@ -440,11 +440,11 @@ async function stepQueue(forceCheck = false) {
   if (isCheckingQueue) return;
   const now = Date.now() / 1000;
   
-  // 1. หาวันที่ต้องเช็กตามลำดับความสำคัญ (P0 ทุก 30 วิ > P1 ทุก 60 วิ)
+  // 1. หาวันที่ต้องเช็กตามลำดับความสำคัญ (P0 ทุก 10 วิ > P1 ทุก 30 วิ)
   let targetDate = null;
   for (const [d, lvl] of Object.entries(watchDates)) {
     if (d < todayStr) continue;
-    const interval = lvl === "P0" ? 30 : 60;
+    const interval = lvl === "P0" ? 10 : 30;
     const due = nextDue[d] || 0;
     if (now >= due || forceCheck) {
       targetDate = d;
